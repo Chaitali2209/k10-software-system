@@ -14,7 +14,7 @@ class VideoWorker(QThread):
         self.source_type = "camera"   # or "file"
         self.video_path = None
 
-        self.detector = YOLOOBBDetector("yolo26n-obb.pt")
+        self.detector = YOLOOBBDetector("yolov8n-obb.pt")
         self.ai_enabled = False
         self.running = True
         self.frame_id = 0
@@ -61,6 +61,7 @@ class VideoWorker(QThread):
             if self.frame_id % 5 == 0:
                 telemetry = extract_osd(top_osd, bottom_osd)
                 if telemetry:
+                    print("[TELEMETRY]", telemetry)
                     self.telemetry_signal.emit(telemetry)
 
             # --- YOLO REGION ---
