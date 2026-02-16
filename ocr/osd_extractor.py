@@ -132,8 +132,8 @@ def extract_osd(frame):
     # -------------------------
     # YOUR FIXED PIXEL ROIs
     # -------------------------
-    lat_roi = frame[1:42, 1477:1824]
-    lon_roi = frame[0:47, 107:465]
+    lat_roi = frame[1:55, 1477:1854]
+    lon_roi = frame[0:55, 107:475]
 
     lat_img = preprocess(lat_roi)
     lon_img = preprocess(lon_roi)
