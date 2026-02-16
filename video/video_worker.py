@@ -58,8 +58,8 @@ class VideoWorker(QThread):
             # ---------------------------------------
             if self.frame_id % 10 == 0:   # every 10 frames
                 telemetry = extract_osd(frame)
-                if telemetry:
-                    print("[TELEMETRY]", telemetry)
+                if telemetry.get("lat") and telemetry.get("lon"):
+                    print("[VALID TELEMETRY]", telemetry)
                     self.telemetry_signal.emit(telemetry)
 
             # ---------------------------------------
