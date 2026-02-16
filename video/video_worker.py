@@ -51,12 +51,13 @@ class VideoWorker(QThread):
 
     def run(self):
         while self.running:
+
             if not self.cap or not self.cap.isOpened():
                 continue
 
             ret, frame = self.cap.read()
 
-            # End of video → stop playback gracefully
+            # End of video → loop file
             if not ret:
                 if self.source_type == "file":
                     self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -64,24 +65,26 @@ class VideoWorker(QThread):
                 else:
                     continue
 
-            h, w, _ = frame.shape
-
-            # --- OSD REGIONS ---
-            top_osd = frame[0:100, :]
-            bottom_osd = frame[h-120:h, :]
-
-            if self.frame_id % 5 == 0:
-                telemetry = extract_osd(top_osd, bottom_osd)
-                if telemetry:
-                    print("[TELEMETRY]", telemetry)
+            # ---------------------------------------
+            # OSD Extraction (using full frame now)
+            # ---------------------------------------
+            if self.frame_id % 10 == 0:   # every 10 frames
+                telemetry = extract_osd(frame)
+                if telemetry.get("lat") and telemetry.get("lon"):
+                    print("[VALID TELEMETRY]", telemetry)
                     self.telemetry_signal.emit(telemetry)
 
-            # --- YOLO REGION ---
-            middle = frame[100:h-120, :]
+            # ---------------------------------------
+            # YOLO Region (exclude OSD if needed)
+            # ---------------------------------------
+            h, w, _ = frame.shape
+
+            # Adjust this if your OSD is only top strip
+            middle = frame[50:h, :]   # skip small top area if needed
 
             if self.ai_enabled:
                 middle = self.detector.infer(middle)
-                frame[100:h-120, :] = middle
+                frame[50:h, :] = middle
 
             self.frame_signal.emit(frame)
             self.frame_id += 1

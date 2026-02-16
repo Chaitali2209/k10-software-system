@@ -5,6 +5,17 @@
     python3 -m http.server 8000
 4. run python main.py
 
+----------Setting up in Dell Laptop---------
+------Start Anaconda Prompt--------
+1. Get list of all available conda env
+    conda info --envs
+
+2. Activating conda env
+    conda activate yolov11
+
+3. Run App
+    python main.py
+
 Working library versions: 
 
 PySide6-6.10.2 
