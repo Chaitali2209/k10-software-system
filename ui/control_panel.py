@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QLabel, QHBoxLayout, QPushButton, QCheckBox
+from PySide6.QtWidgets import QLabel, QHBoxLayout, QPushButton, QCheckBox, QComboBox
 from PySide6.QtCore import Signal, Qt
 from ui.card import Card
 
@@ -95,8 +95,45 @@ class ControlPanel(Card):
         ai_toggle = ToggleButton("AI Mode")
         ai_toggle.toggled_signal.connect(self.ai_toggled.emit)
 
+        self.camera_select = QComboBox()
+        self.camera_select.addItems([
+            'Integrated Camera (ID 0)',
+            'USB Optical Feed (ID 1)',
+            'USB Extra (ID 2)'
+        ])
+        self.camera_select.setMaximumWidth(220)
+        self.camera_select.setStyleSheet("""
+            QComboBox {
+                padding: 6px 12px;
+                border-radius: 6px;
+                background: #f3f4f6;
+                color: #1f2937;
+                border: 1px solid #d1d5db;
+                font-weight: 500;
+            }
+            QComboBox:hover {
+                background: #e5e7eb;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                width: 12px;
+                height: 12px;
+                margin-right: 6px;
+            }
+            QAbstractItemView {
+                background: #ffffff;
+                color: #1f2937;
+                border: 1px solid #d1d5db;
+                selection-background-color: #3b82f6;
+                selection-color: white;
+            }
+        """)
+
         layout = QHBoxLayout(self)
         layout.addWidget(title)
         layout.addStretch()
+        layout.addWidget(self.camera_select)
         layout.addWidget(upload_btn)
         layout.addWidget(ai_toggle)
