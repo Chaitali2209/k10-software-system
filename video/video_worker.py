@@ -37,6 +37,18 @@ class VideoWorker(QThread):
     def enable_ai(self, enabled):
         self.ai_enabled = enabled
 
+    def change_camera(self, device_index):
+        """Switch to a different camera device"""
+        if self.cap:
+            self.cap.release()
+        
+        self.cap = cv2.VideoCapture(device_index, cv2.CAP_MSMF)
+        
+        if device_index in [1, 2]:
+            print(f"[INFO] Switching to External Source (Device {device_index})")
+        
+        self.device_id = device_index
+
     def run(self):
         while self.running:
 
