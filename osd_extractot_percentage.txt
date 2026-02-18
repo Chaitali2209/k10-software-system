@@ -4,34 +4,40 @@ import cv2
 import easyocr
 import re
 import torch
-from collections import deque
 import numpy as np
+from collections import deque
+
 
 # -------------------------------------------------
-# EasyOCR init (once)
+# CONFIG
 # -------------------------------------------------
+
+DEBUG_SAVE_IMAGES = True   # 🔥 Set False in production
+
+# Expected coordinate bounding box (IIT Bombay area)
+MIN_LAT = 19.1300
+MAX_LAT = 19.1400
+MIN_LON = 72.9050
+MAX_LON = 72.9200
+
+# Smoothing buffers
+lat_buffer = deque(maxlen=5)
+lon_buffer = deque(maxlen=5)
+
+
+# -------------------------------------------------
+# EasyOCR (load once)
+# -------------------------------------------------
+
 reader = easyocr.Reader(
     ['en'],
     gpu=torch.cuda.is_available(),
     verbose=False
 )
 
-# -------------------------------------------------
-# IIT Bombay Bounding Box (VERY IMPORTANT)
-# -------------------------------------------------
-MIN_LAT = 19.1300
-MAX_LAT = 19.1400
-
-MIN_LON = 72.9050
-MAX_LON = 72.9200
-DEBUG_SAVE_IMAGES = True
-
-# Smoothing buffers
-lat_buffer = deque(maxlen=5)
-lon_buffer = deque(maxlen=5)
 
 # -------------------------------------------------
-# Validation
+# VALIDATION
 # -------------------------------------------------
 
 def valid_lat(lat):
@@ -42,21 +48,15 @@ def valid_lon(lon):
 
 
 # -------------------------------------------------
-# Digit Reconstruction
+# DIGIT RECONSTRUCTION
 # -------------------------------------------------
 
 def reconstruct_lat(text):
-    """
-    Converts:
-    191346074 → 19.1346074
-    Handles minor OCR corruption
-    """
     digits = re.sub(r'\D', '', text)
 
     if len(digits) < 9:
         return None
 
-    # Force structure 19.xxxxxxx
     if not digits.startswith("19"):
         return None
 
@@ -73,10 +73,6 @@ def reconstruct_lat(text):
 
 
 def reconstruct_lon(text):
-    """
-    Converts:
-    729129807 → 72.9129807
-    """
     digits = re.sub(r'\D', '', text)
 
     if len(digits) < 9:
@@ -98,45 +94,54 @@ def reconstruct_lon(text):
 
 
 # -------------------------------------------------
-# Preprocessing
+# PREPROCESSING (optimized for FPV OSD)
 # -------------------------------------------------
 
 def preprocess(img):
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Strong upscale
-    gray = cv2.resize(gray, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+    # Strong upscale (OSD fonts are tiny)
+    gray = cv2.resize(gray, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
 
-    # Slight blur only to remove sensor noise (not strong)
-    gray = cv2.GaussianBlur(gray, (3,3), 0)
+    # CLAHE (better than equalizeHist for OSD)
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
 
-    # High threshold (digits are bright)
-    _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    # Light blur
+    gray = cv2.GaussianBlur(gray, (3, 3), 0)
 
-    # Morphological closing to connect thin strokes
-    kernel = np.ones((2,2), np.uint8)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    # Adaptive threshold (better for overlay text)
+    thresh = cv2.adaptiveThreshold(
+        gray,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        31,
+        2
+    )
 
     return thresh
 
 
 # -------------------------------------------------
-# MAIN EXTRACTION FUNCTION
+# MAIN EXTRACTION
 # -------------------------------------------------
 
 def extract_osd(frame):
 
     data = {}
+
     h, w = frame.shape[:2]
 
-    # -------------------------
-    # YOUR FIXED PIXEL ROIs
-    # -------------------------
+    # -------------------------------------------------
+    # 🔥 Percentage-based ROI (resolution independent)
+    # -------------------------------------------------
+
     # LAT = top-right 25% width, 6% height
     lat_roi = frame[
         int(0.01 * h): int(0.06 * h),
-        int(0.77 * w): int(0.97 * w)
+        int(0.70 * w): int(0.97 * w)
     ]
 
     # LON = top-left 25% width, 6% height
@@ -145,15 +150,23 @@ def extract_osd(frame):
         int(0.03 * w): int(0.30 * w)
     ]
 
+    # -------------------------------------------------
+    # PREPROCESS
+    # -------------------------------------------------
+
     # lat_img = preprocess(lat_roi)
     # lon_img = preprocess(lon_roi)
-    
+
     lat_img = lat_roi
     lon_img = lon_roi
-
+    
     if DEBUG_SAVE_IMAGES:
         cv2.imwrite("lat_debug.png", lat_img)
         cv2.imwrite("lon_debug.png", lon_img)
+
+    # -------------------------------------------------
+    # OCR
+    # -------------------------------------------------
 
     lat_raw = reader.readtext(
         lat_img,
@@ -178,9 +191,10 @@ def extract_osd(frame):
     lat = reconstruct_lat(lat_text)
     lon = reconstruct_lon(lon_text)
 
-    # -------------------------
-    # Smoothing + Validation
-    # -------------------------
+    # -------------------------------------------------
+    # SMOOTHING
+    # -------------------------------------------------
+
     if lat is not None:
         lat_buffer.append(lat)
 
@@ -189,7 +203,6 @@ def extract_osd(frame):
 
     if len(lat_buffer) >= 3 and len(lon_buffer) >= 3:
 
-        # Median smoothing (very robust to spikes)
         lat_smoothed = float(np.median(lat_buffer))
         lon_smoothed = float(np.median(lon_buffer))
 

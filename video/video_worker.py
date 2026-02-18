@@ -74,6 +74,8 @@ class VideoWorker(QThread):
 
             # Try DirectShow
             cap = cv2.VideoCapture(self.device_id, cv2.CAP_DSHOW)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
             if not cap.isOpened():
                 print("[WARN] DSHOW failed, trying MSMF")
