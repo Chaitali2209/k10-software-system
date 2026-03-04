@@ -130,20 +130,36 @@ def extract_osd(frame):
     data = {}
     h, w = frame.shape[:2]
 
-    # -------------------------
-    # YOUR FIXED PIXEL ROIs
+    # # ------------------------- DIGITAL OSD EXTRACTION -------------------------
+    # # YOUR FIXED PIXEL ROIs for DIGITAL OSD (based on IIT Bombay's OSD layout)
+    # # -------------------------
+    # # LAT = top-right 25% width, 6% height
+    # lat_roi = frame[
+    #     int(0.01 * h): int(0.06 * h),
+    #     int(0.77 * w): int(0.97 * w)
+    # ]
+
+    # # LON = top-left 25% width, 6% height
+    # lon_roi = frame[
+    #     int(0.01 * h): int(0.06 * h),
+    #     int(0.03 * w): int(0.30 * w)
+    # ]
+
+        # ------------------------- ANALOG OSD EXTRACTION -------------------------
+    # YOUR FIXED PIXEL ROIs for DIGITAL OSD (based on IIT Bombay's OSD layout)
     # -------------------------
     # LAT = top-right 25% width, 6% height
-    lat_roi = frame[
-        int(0.01 * h): int(0.06 * h),
-        int(0.77 * w): int(0.97 * w)
+    lon_roi = frame[
+        int(0.02 * h): int(0.10 * h),
+        int(0.58 * w): int(0.97 * w)
     ]
 
     # LON = top-left 25% width, 6% height
-    lon_roi = frame[
-        int(0.01 * h): int(0.06 * h),
-        int(0.03 * w): int(0.30 * w)
+    lat_roi = frame[
+        int(0.02 * h): int(0.10 * h),
+        int(0.08 * w): int(0.41 * w)
     ]
+
 
     # lat_img = preprocess(lat_roi)
     # lon_img = preprocess(lon_roi)
