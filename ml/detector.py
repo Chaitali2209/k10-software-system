@@ -1,5 +1,7 @@
 from ultralytics import YOLO
 import torch
+import cv2
+import numpy as np
 
 
 class YOLOOBBDetector:
@@ -22,10 +24,6 @@ class YOLOOBBDetector:
             print("[YOLO] GPU:", torch.cuda.get_device_name(0))
 
     def infer(self, frame):
-        """
-        Runs OBB tracking on a single frame
-        Returns annotated frame
-        """
 
         results = self.model.track(
             frame,
@@ -35,12 +33,31 @@ class YOLOOBBDetector:
             imgsz=self.imgsz,
             tracker=self.tracker,
             verbose=False,
-            persist=True   # IMPORTANT for tracking continuity
+            persist=True
         )
 
-        annotated_frame = results[0].plot(
-            font_size=0.6,
-            line_width=1
-        )
+        result = results[0]
+        annotated_frame = frame.copy()
+
+        if result.obb is not None:
+            boxes = result.obb.xyxyxyxy.cpu().numpy()  # 8-point OBB format
+            cls_ids = result.obb.cls.cpu().numpy()
+
+            for i, box in enumerate(boxes):
+
+                pts = box.reshape((4, 2)).astype(int)
+
+                # -------- Customize here --------
+                color = (0, 0, 255)      # RED (BGR)
+                thickness = 4            # Increase width here
+                # --------------------------------
+
+                cv2.polylines(
+                    annotated_frame,
+                    [pts],
+                    isClosed=True,
+                    color=color,
+                    thickness=thickness
+                )
 
         return annotated_frame

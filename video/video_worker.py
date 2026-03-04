@@ -24,7 +24,9 @@ class VideoWorker(QThread):
 
         # YOLO loads once
         self.detector = YOLOOBBDetector(
-            "D:\\k10app_copy\\k10-software-system\\ml\\yolo-obb.pt"
+            # "D:\\k10app_copy\\k10-software-system\\ml\\yolo-obb.pt"
+            "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
+            # "D:\\k10app_copy\\k10-software-system\\ml\\best-inf3.pt"
         )
 
     # --------------------------------------------------
