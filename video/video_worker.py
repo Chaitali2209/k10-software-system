@@ -8,6 +8,7 @@ import time
 class VideoWorker(QThread):
 
     frame_signal = Signal(object)
+    raw_frame_signal = Signal(object)
     telemetry_signal = Signal(dict)
 
     def __init__(self, device_id=1):   # 🔥 DEFAULT = CAMERA 1
@@ -23,10 +24,9 @@ class VideoWorker(QThread):
         self._thread_started = False
 
         # YOLO loads once
-        self.detector = YOLOOBBDetector(
-            # "D:\\k10app_copy\\k10-software-system\\ml\\yolo-obb.pt"
-            "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
-            # "D:\\k10app_copy\\k10-software-system\\ml\\best-inf3.pt"
+        self.detector = YOLOOBBDetector( # Path update for my system only, change as needed
+            # "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
+            model_path="yolo26n-obb.pt",
         )
 
     # --------------------------------------------------
@@ -163,6 +163,9 @@ class VideoWorker(QThread):
                         self.telemetry_signal.emit(telemetry)
                 except Exception as e:
                     print("[OCR ERROR]", e)
+
+            # Emit raw frame (for plain video window)
+            self.raw_frame_signal.emit(frame.copy())
 
             # -------------------------------------------------
             # YOLO

@@ -11,15 +11,17 @@ from ui.telemetry_panel import TelemetryPanel
 from ui.control_panel import ControlPanel
 from ui.map_widget import MapWidget
 from ui.status_bar import StatusBar
-from video.video_worker import VideoWorker
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    """Window 2: AI Inference video feed with telemetry and map."""
+
+    def __init__(self, worker):
         super().__init__()
+        self.worker = worker
 
         self.resize(1700, 950)
-        self.setWindowTitle("Drone GCS")
+        self.setWindowTitle("Main Window")
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -47,9 +49,6 @@ class MainWindow(QMainWindow):
         layout.addLayout(body, 9)
 
         central.setLayout(layout)
-
-        # 🔥 DEFAULT CAMERA INDEX = 1
-        self.worker = VideoWorker(device_id=1)
 
         # ---- SIGNALS ----
         self.worker.frame_signal.connect(self.video.update_frame)
