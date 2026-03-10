@@ -3,12 +3,14 @@ from PySide6.QtCore import QThread, Signal
 from ocr.osd_extractor import extract_osd
 from ml.detector import YOLOOBBDetector
 import time
+# from PySide6.QtCore import QThread
+from threading import Thread
 
 
 class VideoWorker(QThread):
 
     frame_signal = Signal(object)
-    raw_frame_signal = Signal(object)
+    # raw_frame_signal = Signal(object)
     telemetry_signal = Signal(dict)
 
     def __init__(self, device_id=1):   # 🔥 DEFAULT = CAMERA 1
@@ -76,19 +78,25 @@ class VideoWorker(QThread):
 
             # Try DirectShow
             cap = cv2.VideoCapture(self.device_id, cv2.CAP_DSHOW)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
             if not cap.isOpened():
                 print("[WARN] DSHOW failed, trying MSMF")
                 cap = cv2.VideoCapture(self.device_id, cv2.CAP_MSMF)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
             self.cap = cap
+
+            # print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         else:
             print("[INFO] Opening Video File")
             self.cap = cv2.VideoCapture(self.video_path)
-
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            # print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         if not self.cap or not self.cap.isOpened():
             print("[ERROR] Failed to open source")
 
@@ -124,7 +132,16 @@ class VideoWorker(QThread):
     def enable_ai(self, enabled):
         self.ai_enabled = enabled
         print(f"[INFO] AI Enabled: {self.ai_enabled}")
-
+    
+    def fetch_frame(self):
+        """Process frames with AI in a separate thread."""
+        while True:
+            if self.ai_enabled and hasattr(self, 'frame') and self.frame is not None:
+                try:
+                    self.detect_frame = self.detector.infer(cv2.resize(self.frame, (1280, 720)))
+                except Exception as e:
+                    print("[YOLO ERROR]", e)
+            # time.sleep(0.01)  # Prevent CPU spinning
     # --------------------------------------------------
     # MAIN LOOP
     # --------------------------------------------------
@@ -132,6 +149,10 @@ class VideoWorker(QThread):
 
         last_ocr_time = 0
 
+        # Start AI thread as daemon so it doesn't block
+        # ai = Thread(target=self.fetch_frame, daemon=True)   
+        # ai.start()
+        
         while True:
 
             if not self.running:
@@ -151,7 +172,6 @@ class VideoWorker(QThread):
                 else:
                     time.sleep(0.01)
                     continue
-
             # -------------------------------------------------
             # OCR
             # -------------------------------------------------
@@ -164,12 +184,15 @@ class VideoWorker(QThread):
                 except Exception as e:
                     print("[OCR ERROR]", e)
 
-            # Emit raw frame (for plain video window)
-            self.raw_frame_signal.emit(frame.copy())
+            # # Emit raw frame (for plain video window)
+            # self.raw_frame_signal.emit(cv2.resize(self.frame, (1280, 720)))
 
-            # -------------------------------------------------
-            # YOLO
-            # -------------------------------------------------
+            # # Emit processed frame (with AI annotations if enabled)
+            # if self.ai_enabled and hasattr(self, 'detect_frame') and self.detect_frame is not None:
+            #     self.frame_signal.emit(cv2.resize(self.detect_frame, (1280, 720)))
+            # else:
+            #     self.frame_signal.emit(cv2.resize(self.frame, (1280, 720)))
+
             if self.ai_enabled:
                 try:
                     frame = self.detector.infer(frame)
@@ -179,3 +202,4 @@ class VideoWorker(QThread):
             self.frame_signal.emit(frame)
 
             time.sleep(1 / 60)
+        

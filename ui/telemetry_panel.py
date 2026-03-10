@@ -8,7 +8,7 @@ class TelemetryPanel(Card):
         grid.setSpacing(14)
 
         self.fields = {}
-        labels = ["LAT", "LON", "ALT", "BAT", "SATS", "HDOP"]
+        labels = ["LAT", "LON", "ALT", "BAT", "SATS", "SPEED"]
 
         for i, key in enumerate(labels):
             title = QLabel(key)

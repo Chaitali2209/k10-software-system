@@ -11,14 +11,15 @@ from ui.telemetry_panel import TelemetryPanel
 from ui.control_panel import ControlPanel
 from ui.map_widget import MapWidget
 from ui.status_bar import StatusBar
+from video.video_worker import VideoWorker
 
 
 class MainWindow(QMainWindow):
     """Window 2: AI Inference video feed with telemetry and map."""
 
-    def __init__(self, worker):
+    def __init__(self,):
         super().__init__()
-        self.worker = worker
+        self.worker = VideoWorker(device_id=0)
 
         self.resize(1700, 950)
         self.setWindowTitle("Main Window")
@@ -62,12 +63,12 @@ class MainWindow(QMainWindow):
         self.video.ai_toggled.connect(self.worker.enable_ai)
 
     def open_video_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(
+        file_path, _ = QFileDialog.getOpenFileName( 
             self,
             "Select Video File",
             "",
             "Video Files (*.mp4 *.avi *.mov *.mkv)"
         )
-
+ 
         if file_path:
             self.worker.open_video_file(file_path)
