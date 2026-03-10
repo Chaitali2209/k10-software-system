@@ -1,89 +1,359 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8" />
-  <title>Esri Map</title>
 
-  <link rel="stylesheet"
-        href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+
   <script src="https://js.arcgis.com/4.29/"></script>
 
   <style>
-    html, body, #viewDiv {
-      padding: 0;
+    html,
+    body,
+    #viewDiv {
       margin: 0;
+      padding: 0;
       height: 100%;
       width: 100%;
     }
   </style>
+
 </head>
 
 <body>
-<div id="viewDiv"></div>
 
-<script>
-require([
-  "esri/Map",
-  "esri/views/MapView",
-  "esri/Graphic",
-  "esri/layers/GraphicsLayer"
-], function(Map, MapView, Graphic, GraphicsLayer) {
+  <div id="viewDiv"></div>
 
-  const pathLayer = new GraphicsLayer();
-  const droneLayer = new GraphicsLayer();
+  <!-- <script>
 
-  const map = new Map({
-    basemap: "satellite",
-    layers: [pathLayer, droneLayer]
-  });
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/Graphic",
+      "esri/layers/GraphicsLayer"
+    ], function (Map, MapView, Graphic, GraphicsLayer) {
 
-  const view = new MapView({
-    container: "viewDiv",
-    map: map,
-    center: [72.8777, 19.0760], // Mumbai
-    zoom: 15
-  });
+      const pathLayer = new GraphicsLayer()
+      const droneLayer = new GraphicsLayer()
+      const missionLayer = new GraphicsLayer()
+      const waypointLayer = new GraphicsLayer()
 
-  let pathPoints = [];
+      const map = new Map({
+        basemap: "satellite",
+        layers: [missionLayer, pathLayer, waypointLayer, droneLayer]
+      })
 
-  window.updateDronePosition = function(lat, lon) {
-    const point = {
-      type: "point",
-      longitude: lon,
-      latitude: lat
-    };
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [72.8777, 19.0760],
+        zoom: 15
+      })
 
-    pathPoints.push(point);
+      let pathPoints = []
+      let missionPoints = []
+      let planningMode = false
 
-    droneLayer.removeAll();
-    pathLayer.removeAll();
+      window.updateDronePosition = function (lat, lon) {
 
-    droneLayer.add(new Graphic({
-      geometry: point,
-      symbol: {
-        type: "simple-marker",
-        color: "red",
-        size: "10px"
-      }
-    }));
-
-    if (pathPoints.length > 1) {
-      pathLayer.add(new Graphic({
-        geometry: {
-          type: "polyline",
-          paths: [pathPoints.map(p => [p.longitude, p.latitude])]
-        },
-        symbol: {
-          type: "simple-line",
-          color: "cyan",
-          width: 2
+        const point = {
+          type: "point",
+          longitude: lon,
+          latitude: lat
         }
-      }));
-    }
 
-    view.center = [lon, lat];
-  };
-});
-</script>
+        pathPoints.push(point)
+
+        droneLayer.removeAll()
+        pathLayer.removeAll()
+
+        droneLayer.add(new Graphic({
+          geometry: point,
+          symbol: {
+            type: "simple-marker",
+            color: "white",
+            size: "10px"
+          }
+        }))
+
+        if (pathPoints.length > 1) {
+
+          pathLayer.add(new Graphic({
+            geometry: {
+              type: "polyline",
+              paths: [pathPoints.map(p => [p.longitude, p.latitude])]
+            },
+            symbol: {
+              type: "simple-line",
+              color: "cyan",
+              width: 2
+            }
+          }))
+
+        }
+
+      }
+
+      window.enableMissionPlanning = function () {
+
+        planningMode = true
+        missionPoints = []
+        waypointLayer.removeAll()
+
+      }
+
+      view.on("click", function (event) {
+
+        if (!planningMode)
+          return
+
+        const lon = event.mapPoint.longitude
+        const lat = event.mapPoint.latitude
+
+        const point = {
+          type: "point",
+          longitude: lon,
+          latitude: lat
+        }
+
+        missionPoints.push(point)
+
+        waypointLayer.add(new Graphic({
+          geometry: point,
+          symbol: {
+            type: "simple-marker",
+            color: "yellow",
+            size: "8px"
+          }
+        }))
+
+      })
+
+      window.uploadMission = function () {
+
+        planningMode = false
+
+        missionLayer.removeAll()
+
+        if (missionPoints.length < 2)
+          return
+
+        missionLayer.add(new Graphic({
+          geometry: {
+            type: "polyline",
+            paths: [missionPoints.map(p => [p.longitude, p.latitude])]
+          },
+          symbol: {
+            type: "simple-line",
+            color: "red",
+            width: 3
+          }
+        }))
+
+      }
+
+    })
+
+  </script> -->
+
+  <script>
+
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/Graphic",
+      "esri/layers/GraphicsLayer"
+    ], function (Map, MapView, Graphic, GraphicsLayer) {
+
+      const droneLayer = new GraphicsLayer()
+      const pathLayer = new GraphicsLayer()
+
+      const waypointLayer = new GraphicsLayer()
+      const planningLayer = new GraphicsLayer()
+
+      const missionLayer = new GraphicsLayer()
+
+      const map = new Map({
+        basemap: "satellite",
+        layers: [
+          missionLayer,
+          planningLayer,
+          pathLayer,
+          waypointLayer,
+          droneLayer
+        ]
+      })
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [72.8777, 19.0760],
+        zoom: 15
+      })
+
+      let pathPoints = []
+      let missionPoints = []
+      let planningMode = false
+
+      // --------------------
+      // DRONE PATH (CYAN)
+      // --------------------
+
+      window.updateDronePosition = function (lat, lon) {
+
+        const point = {
+          type: "point",
+          longitude: lon,
+          latitude: lat
+        }
+
+        pathPoints.push(point)
+
+        droneLayer.removeAll()
+        pathLayer.removeAll()
+
+        droneLayer.add(new Graphic({
+          geometry: point,
+          symbol: {
+            type: "simple-marker",
+            color: "white",
+            size: "10px"
+          }
+        }))
+
+        if (pathPoints.length > 1) {
+
+          pathLayer.add(new Graphic({
+            geometry: {
+              type: "polyline",
+              paths: [pathPoints.map(p => [p.longitude, p.latitude])]
+            },
+            symbol: {
+              type: "simple-line",
+              color: "cyan",
+              width: 2
+            }
+          }))
+
+        }
+
+      }
+
+      // --------------------
+      // ENABLE PLANNING
+      // --------------------
+
+      window.enableMissionPlanning = function () {
+
+        planningMode = true
+
+        missionPoints = []
+
+        waypointLayer.removeAll()
+        planningLayer.removeAll()
+
+      }
+
+      // --------------------
+      // CLICK → ADD WAYPOINT
+      // --------------------
+
+      view.on("click", function (event) {
+
+        if (!planningMode)
+          return
+
+        const lon = event.mapPoint.longitude
+        const lat = event.mapPoint.latitude
+        const index = missionPoints.length
+
+        const point = {
+          type: "point",
+          longitude: lon,
+          latitude: lat
+        }
+
+        missionPoints.push(point)
+
+        // waypoint marker
+        waypointLayer.add(new Graphic({
+          geometry: point,
+          symbol: {
+            type: "picture-marker",
+            url: "https://static.arcgis.com/images/Symbols/Shapes/BluePin1LargeB.png",
+            width: "24px",
+            height: "24px"
+          }
+        }))
+
+        waypointLayer.add(new Graphic({
+          geometry: point,
+          symbol: {
+            type: "text",
+            text: index.toString(),
+            color: "white",
+            font: {
+              size: 10,
+              weight: "bold"
+            },
+            yoffset: 8
+          }
+        }))
+
+        // draw temporary planning line
+        planningLayer.removeAll()
+
+        if (missionPoints.length > 1) {
+
+          planningLayer.add(new Graphic({
+            geometry: {
+              type: "polyline",
+              paths: [missionPoints.map(p => [p.longitude, p.latitude])]
+            },
+            symbol: {
+              type: "simple-line",
+              color: "yellow",
+              width: 3
+            }
+          }))
+
+        }
+
+      })
+
+      // --------------------
+      // UPLOAD MISSION
+      // --------------------
+
+      window.uploadMission = function () {
+
+        planningMode = false
+
+        planningLayer.removeAll()
+        missionLayer.removeAll()
+
+        if (missionPoints.length < 2)
+          return
+
+        missionLayer.add(new Graphic({
+          geometry: {
+            type: "polyline",
+            paths: [missionPoints.map(p => [p.longitude, p.latitude])]
+          },
+          symbol: {
+            type: "simple-line",
+            color: "red",
+            width: 3
+          }
+        }))
+
+      }
+
+    })
+
+  </script>
+
 </body>
+
 </html>

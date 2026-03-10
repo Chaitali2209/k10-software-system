@@ -14,7 +14,6 @@ from ui.status_bar import StatusBar
 
 
 class MainWindow(QMainWindow):
-    """Window 2: AI Inference video feed with telemetry and map."""
 
     def __init__(self, worker):
         super().__init__()
@@ -50,18 +49,25 @@ class MainWindow(QMainWindow):
 
         central.setLayout(layout)
 
-        # ---- SIGNALS ----
+        # VIDEO + TELEMETRY
         self.worker.frame_signal.connect(self.video.update_frame)
         self.worker.telemetry_signal.connect(self.telemetry.update)
         self.worker.telemetry_signal.connect(self.map_view.update_position)
 
+        # CONTROLS
         self.controls.start_clicked.connect(self.worker.start_stream)
         self.controls.stop_clicked.connect(self.worker.stop_stream)
         self.controls.upload_clicked.connect(self.open_video_file)
         self.controls.camera_changed.connect(self.worker.change_camera)
+
         self.video.ai_toggled.connect(self.worker.enable_ai)
 
+        # MISSION PLANNING
+        self.controls.plan_mission_clicked.connect(self.map_view.enable_mission_planning)
+        self.controls.upload_mission_clicked.connect(self.map_view.upload_mission)
+
     def open_video_file(self):
+
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Video File",
