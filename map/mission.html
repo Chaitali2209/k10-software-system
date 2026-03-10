@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+
+<link rel="stylesheet"
+href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+
+<script src="https://js.arcgis.com/4.29/"></script>
+
+<style>
+html, body, #viewDiv{
+height:100%;
+width:100%;
+margin:0;
+padding:0;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="viewDiv"></div>
+
+<script>
+
+require([
+"esri/Map",
+"esri/views/MapView",
+"esri/Graphic",
+"esri/layers/GraphicsLayer"
+], function(Map, MapView, Graphic, GraphicsLayer) {
+
+const waypointLayer = new GraphicsLayer()
+const routeLayer = new GraphicsLayer()
+
+const map = new Map({
+basemap:"satellite",
+layers:[routeLayer, waypointLayer]
+})
+
+const view = new MapView({
+container:"viewDiv",
+map:map,
+center:[72.8777,19.0760],
+zoom:15
+})
+
+let waypoints = []
+let startPoint = null
+let endPoint = null
+
+function drawRoute(){
+
+routeLayer.removeAll()
+
+if(waypoints.length < 2)
+return
+
+routeLayer.add(new Graphic({
+geometry:{
+type:"polyline",
+paths:[waypoints.map(p => [p.longitude,p.latitude])]
+},
+symbol:{
+type:"simple-line",
+color:"yellow",
+width:3
+}
+}))
+}
+
+function addMarker(point,color){
+
+waypointLayer.add(new Graphic({
+geometry:point,
+symbol:{
+type:"simple-marker",
+color:color,
+size:"10px"
+}
+}))
+}
+
+view.on("click", function(event){
+
+const point={
+type:"point",
+longitude:event.mapPoint.longitude,
+latitude:event.mapPoint.latitude
+}
+
+if(!startPoint){
+
+startPoint = point
+waypoints.push(point)
+addMarker(point,"green")
+
+}
+else{
+
+waypoints.push(point)
+addMarker(point,"orange")
+
+}
+
+drawRoute()
+
+})
+
+window.setDestination=function(){
+
+if(waypoints.length==0)
+return
+
+endPoint = waypoints[waypoints.length-1]
+
+waypointLayer.add(new Graphic({
+geometry:endPoint,
+symbol:{
+type:"simple-marker",
+color:"red",
+size:"12px"
+}
+}))
+
+}
+
+window.clearMission=function(){
+
+waypoints=[]
+startPoint=null
+endPoint=null
+
+waypointLayer.removeAll()
+routeLayer.removeAll()
+
+}
+
+window.getMission=function(){
+
+return waypoints
+
+}
+
+})
+
+</script>
+
+</body>
+</html>
