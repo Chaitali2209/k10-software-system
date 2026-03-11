@@ -79,14 +79,14 @@ class VideoWorker(QThread):
 
             # Try DirectShow
             cap = cv2.VideoCapture(self.device_id, cv2.CAP_DSHOW)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
             if not cap.isOpened():
                 print("[WARN] DSHOW failed, trying MSMF")
                 cap = cv2.VideoCapture(self.device_id, cv2.CAP_MSMF)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
             self.cap = cap
 
@@ -95,8 +95,8 @@ class VideoWorker(QThread):
         else:
             print("[INFO] Opening Video File")
             self.cap = cv2.VideoCapture(self.video_path)
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             # print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         if not self.cap or not self.cap.isOpened():
             print("[ERROR] Failed to open source")

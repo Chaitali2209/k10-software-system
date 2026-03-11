@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self,):
         super().__init__()
-        self.worker = VideoWorker(device_id=0)
+        self.worker = VideoWorker(device_id=1)
 
         self.resize(1700, 950)
         self.setWindowTitle("Main Window")
