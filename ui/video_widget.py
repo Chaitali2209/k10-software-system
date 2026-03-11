@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QPushButton
 from PySide6.QtCore import Signal
 from ui.card import Card
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QImage, QPixmap, Qt
 import cv2
 
 class ToggleButton(QPushButton):
@@ -71,12 +71,19 @@ class ToggleButton(QPushButton):
         self._is_checked = checked
         self._update_style()
 
+class ImageLabel(QLabel):
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            x = event.position().x()
+            y = event.position().y()
+            print(f"Clicked at: x={x}, y={y}")
+
 class VideoWidget(Card):
     ai_toggled = Signal(bool)
     
     def __init__(self):
         super().__init__()
-        self.label = QLabel()
+        self.label = ImageLabel()
         self.label.setStyleSheet("background:black; border-radius:10px;")
         self.label.setScaledContents(True)
 
@@ -98,5 +105,5 @@ class VideoWidget(Card):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb.shape
         img = QImage(rgb.data, w, h, ch * w, QImage.Format_RGB888)
-        print("Frame received")
+        # print("Frame received")
         self.label.setPixmap(QPixmap.fromImage(img))

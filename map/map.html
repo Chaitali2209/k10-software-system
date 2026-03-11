@@ -349,6 +349,17 @@
         }))
 
       }
+      window.clearMission = function () {
+
+                waypoints = []
+                startPoint = null
+                endPoint = null
+
+                waypointLayer.removeAll()
+                planningLayer.removeAll()
+                missionLayer.removeAll()
+
+            }
 
     })
 

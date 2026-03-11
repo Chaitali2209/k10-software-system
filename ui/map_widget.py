@@ -33,3 +33,9 @@ class MapWidget(QFrame):
         self.web.page().runJavaScript(
             "uploadMission();"
         )
+
+    def clear_mission(self):
+
+        self.web.page().runJavaScript(
+            "clearMission();"
+        )

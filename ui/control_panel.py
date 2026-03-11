@@ -16,6 +16,7 @@ class ControlPanel(Card):
     upload_clicked = Signal()
     camera_changed = Signal(int)
     ai_toggled = Signal(bool)
+    clear_mission_clicked = Signal()
 
     plan_mission_clicked = Signal()
     upload_mission_clicked = Signal()
@@ -48,6 +49,10 @@ class ControlPanel(Card):
         upload_mission_btn.setStyleSheet("background:#dc2626; color:white;")
         upload_mission_btn.clicked.connect(self.upload_mission_clicked.emit)
 
+        clear_mission_button = QPushButton("Clear Mission")
+        clear_mission_button.setStyleSheet("background:#6b7280; color:white;")
+        clear_mission_button.clicked.connect(self.clear_mission_clicked.emit)
+
         self.camera_select = QComboBox()
         self.camera_select.setMinimumWidth(250)
         self.camera_select.setStyleSheet("background:#2563eb; color:white;")
@@ -64,6 +69,7 @@ class ControlPanel(Card):
         layout.addWidget(upload_btn)
         layout.addWidget(plan_btn)
         layout.addWidget(upload_mission_btn)
+        layout.addWidget(clear_mission_button)
 
     def populate_cameras(self):
 
