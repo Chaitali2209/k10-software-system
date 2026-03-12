@@ -99,7 +99,7 @@ class VideoWorker(QThread):
             userpath = os.path.expanduser("~")
             videodir = os.path.join(userpath, "Videos")
             path = os.path.join(videodir, f"outputvid{int(time.time())}.mp4")
-            self.out = cv2.VideoWriter(path, cv2.fourcc(*'mp4v'), 20.0, (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+            self.out = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
             # print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         else:
@@ -164,7 +164,7 @@ class VideoWorker(QThread):
     # --------------------------------------------------
     def run(self):
 
-        last_ocr_time = 0
+        # last_ocr_time = 0
 
         # Start AI thread as daemon so it doesn't block
         # ai = Thread(target=self.fetch_frame, daemon=True)   

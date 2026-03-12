@@ -13,7 +13,7 @@ from ui.map_widget import MapWidget
 from ui.status_bar import StatusBar
 from video.video_worker import VideoWorker
 from ocr.osd_extractor import OCRWorker
-
+from control.visioncontrol import VisionControl
 
 class MainWindow(QMainWindow):
 
@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         self.controls = ControlPanel()
         self.map_view = MapWidget()
         self.ocr = OCRWorker()
+        self.visioncontrol = VisionControl()
 
         left = QVBoxLayout()
         left.addWidget(self.video, 6)
@@ -55,11 +56,14 @@ class MainWindow(QMainWindow):
         # VIDEO + TELEMETRY
         self.worker.frame_signal.connect(self.video.update_frame)
         self.worker.frame_signal.connect(self.ocr.receive_frame)
+        self.worker.frame_signal.connect(self.visioncontrol.getFrame)
+        self.video.clicked.connect(self.visioncontrol.selectedpoint)
         self.ocr.telemetry_signal.connect(self.telemetry.update)
         self.ocr.telemetry_signal.connect(self.map_view.update_position)
 
         # CONTROLS
         self.controls.start_clicked.connect(self.worker.start_stream)
+        self.controls.start_clicked.connect(self.visioncontrol.start_control)
         self.controls.start_clicked.connect(self.ocr.start_ocr)
         self.controls.stop_clicked.connect(self.worker.stop_stream)
         self.controls.upload_clicked.connect(self.open_video_file)

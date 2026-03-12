@@ -8,6 +8,7 @@ class ToggleButton(QPushButton):
     """Custom toggle button with proper visual feedback"""
     toggled_signal = Signal(bool)
     
+    
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
         self._is_checked = False
@@ -72,20 +73,22 @@ class ToggleButton(QPushButton):
         self._update_style()
 
 class ImageLabel(QLabel):
+    clicked_signal = Signal(dict)
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             x = event.position().x()
             y = event.position().y()
-            print(f"Clicked at: x={x}, y={y}")
+            self.clicked_signal.emit({"x": x, "y": y})
 
 class VideoWidget(Card):
     ai_toggled = Signal(bool)
-    
+    clicked = Signal(dict)  # New signal for click events with coordinates
     def __init__(self):
         super().__init__()
         self.label = ImageLabel()
         self.label.setStyleSheet("background:black; border-radius:10px;")
         self.label.setScaledContents(True)
+        self.label.clicked_signal.connect(self.pointsignal)
 
         self.ai_toggle = ToggleButton("AI Mode")
         self.ai_toggle.toggled_signal.connect(self.ai_toggled.emit)
@@ -100,6 +103,9 @@ class VideoWidget(Card):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.addLayout(top_bar)
         layout.addWidget(self.label)
+
+    def pointsignal(self, event):
+        self.clicked.emit(event)
 
     def update_frame(self, frame):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
