@@ -8,7 +8,6 @@ from PySide6.QtCore import Signal
 from ui.card import Card
 from pygrabber.dshow_graph import FilterGraph
 
-
 class ControlPanel(Card):
 
     start_clicked = Signal()
@@ -19,6 +18,9 @@ class ControlPanel(Card):
 
     plan_mission_clicked = Signal()
     upload_mission_clicked = Signal()
+
+    clear_mission_clicked = Signal()
+    clear_path_clicked = Signal()
 
     def __init__(self):
         super().__init__()
@@ -48,6 +50,14 @@ class ControlPanel(Card):
         upload_mission_btn.setStyleSheet("background:#dc2626; color:white;")
         upload_mission_btn.clicked.connect(self.upload_mission_clicked.emit)
 
+        clear_mission_btn = QPushButton("Clear Mission")
+        clear_mission_btn.setStyleSheet("background:#7c3aed; color:white;")
+        clear_mission_btn.clicked.connect(self.clear_mission_clicked.emit)
+
+        clear_path_btn = QPushButton("Clear Path")
+        clear_path_btn.setStyleSheet("background:#475569; color:white;")
+        clear_path_btn.clicked.connect(self.clear_path_clicked.emit)
+
         self.camera_select = QComboBox()
         self.camera_select.setMinimumWidth(250)
         self.camera_select.setStyleSheet("background:#2563eb; color:white;")
@@ -64,6 +74,8 @@ class ControlPanel(Card):
         layout.addWidget(upload_btn)
         layout.addWidget(plan_btn)
         layout.addWidget(upload_mission_btn)
+        layout.addWidget(clear_mission_btn)
+        layout.addWidget(clear_path_btn)
 
     def populate_cameras(self):
 

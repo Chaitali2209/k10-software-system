@@ -15,6 +15,9 @@ class MapWidget(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.web)
 
+    # -------------------------
+    # UPDATE DRONE POSITION
+    # -------------------------
     def update_position(self, telemetry):
 
         if "lat" in telemetry and "lon" in telemetry:
@@ -22,14 +25,38 @@ class MapWidget(QFrame):
                 f"updateDronePosition({telemetry['lat']}, {telemetry['lon']});"
             )
 
+    # -------------------------
+    # ENABLE MISSION PLANNING
+    # -------------------------
     def enable_mission_planning(self):
 
         self.web.page().runJavaScript(
             "enableMissionPlanning();"
         )
 
+    # -------------------------
+    # UPLOAD MISSION
+    # -------------------------
     def upload_mission(self):
 
         self.web.page().runJavaScript(
             "uploadMission();"
+        )
+
+    # -------------------------
+    # CLEAR USER MISSION
+    # -------------------------
+    def clear_mission(self):
+
+        self.web.page().runJavaScript(
+            "clearMission();"
+        )
+
+    # -------------------------
+    # CLEAR DRONE PATH (OSD)
+    # -------------------------
+    def clear_path(self):
+
+        self.web.page().runJavaScript(
+            "clearPath();"
         )
