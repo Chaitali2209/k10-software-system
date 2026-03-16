@@ -80,6 +80,9 @@ class MainWindow(QMainWindow):
         self.worker.stop_stream()
         return super().closeEvent(event)
 
+        self.controls.clear_mission_clicked.connect(self.map_view.clear_mission)
+        self.controls.clear_path_clicked.connect(self.map_view.clear_path)
+
     def open_video_file(self):
         file_path, _ = QFileDialog.getOpenFileName( 
             self,
