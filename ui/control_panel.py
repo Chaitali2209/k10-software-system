@@ -15,6 +15,7 @@ class ControlPanel(Card):
     upload_clicked = Signal()
     camera_changed = Signal(int)
     ai_toggled = Signal(bool)
+    clear_mission_clicked = Signal()
 
     plan_mission_clicked = Signal()
     upload_mission_clicked = Signal()

@@ -1,10 +1,12 @@
 import cv2
 from PySide6.QtCore import QThread, Signal
-from ocr.osd_extractor import extract_osd
+# from ocr.osd_extractor import extract_osd
 from ml.detector import YOLOOBBDetector
 import time
 # from PySide6.QtCore import QThread
 from threading import Thread
+import os
+# from ocr.osd_extractor import OCRWorker
 
 
 class VideoWorker(QThread):
@@ -13,6 +15,7 @@ class VideoWorker(QThread):
     # raw_frame_signal = Signal(object)
     telemetry_signal = Signal(dict)
 
+
     def __init__(self, device_id=1):   # 🔥 DEFAULT = CAMERA 1
         super().__init__()
 
@@ -20,18 +23,21 @@ class VideoWorker(QThread):
         self.cap = None
         self.source_type = "camera"
         self.video_path = None
+        self.out = None
 
         self.ai_enabled = False
         self.running = False
         self._thread_started = False
-
+        # self.ocr.telemetry_signal.connect(self.telemetryemit)
         # YOLO loads once
         self.detector = YOLOOBBDetector( # Path update for my system only, change as needed
              # "D:\\k10app_copy\\k10-software-system\\ml\\yolo-obb.pt"
-            "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
+            # "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
+            "C:\\Users\\DEVELOPER\\Documents\\k10-software-system\\yolov8n-obb.pt"
             # "D:\\k10app_copy\\k10-software-system\\ml\\best-inf3.pt"
         )
 
+    
     # --------------------------------------------------
     # START STREAM
     # --------------------------------------------------
@@ -60,6 +66,7 @@ class VideoWorker(QThread):
 
         if self.cap:
             self.cap.release()
+            self.out.release()
             self.cap = None
 
     # --------------------------------------------------
@@ -79,24 +86,31 @@ class VideoWorker(QThread):
 
             # Try DirectShow
             cap = cv2.VideoCapture(self.device_id, cv2.CAP_DSHOW)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
             if not cap.isOpened():
                 print("[WARN] DSHOW failed, trying MSMF")
                 cap = cv2.VideoCapture(self.device_id, cv2.CAP_MSMF)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
             self.cap = cap
-
+            userpath = os.path.expanduser("~")
+            videodir = os.path.join(userpath, "Videos")
+            path = os.path.join(videodir, f"outputvid{int(time.time())}.mp4")
+            self.out = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
             # print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         else:
             print("[INFO] Opening Video File")
             self.cap = cv2.VideoCapture(self.video_path)
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            userpath = os.path.expanduser("~")
+            videodir = os.path.join(userpath, "Videos")
+            path = os.path.join(videodir, f"outputvid{int(time.time())}.mp4")
+            self.out = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
             # print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         if not self.cap or not self.cap.isOpened():
             print("[ERROR] Failed to open source")
@@ -143,12 +157,14 @@ class VideoWorker(QThread):
                 except Exception as e:
                     print("[YOLO ERROR]", e)
             # time.sleep(0.01)  # Prevent CPU spinning
+    def telemetryemit(self, data):
+        self.telemetry_signal.emit(data)
     # --------------------------------------------------
     # MAIN LOOP
     # --------------------------------------------------
     def run(self):
 
-        last_ocr_time = 0
+        # last_ocr_time = 0
 
         # Start AI thread as daemon so it doesn't block
         # ai = Thread(target=self.fetch_frame, daemon=True)   
@@ -165,6 +181,8 @@ class VideoWorker(QThread):
                 continue
 
             ret, frame = self.cap.read()
+            self.out.write(frame)
+            frame =cv2.resize(frame, (1080, 608))
 
             if not ret or frame is None:
                 if self.source_type == "file":
@@ -176,14 +194,17 @@ class VideoWorker(QThread):
             # -------------------------------------------------
             # OCR
             # -------------------------------------------------
-            if time.time() - last_ocr_time > 0.5:
-                last_ocr_time = time.time()
-                try:
-                    telemetry = extract_osd(frame.copy())
-                    if telemetry.get("lat") and telemetry.get("lon"):
-                        self.telemetry_signal.emit(telemetry)
-                except Exception as e:
-                    print("[OCR ERROR]", e)
+            
+            # if time.time() - last_ocr_time > 1:
+            #     last_ocr_time = time.time()
+            #     try:
+            #         # telemetry = OCRWorker(frame.copy())
+            #         # # if telemetry.get("lat") and telemetry.get("lon"):
+            #         # self.telemetry_signal.emit(telemetry)
+            #         self.ocr = OCRWorker(frame.copy())
+                    
+            #     except Exception as e:
+            #         print("[OCR ERROR]", e)
 
             # # Emit raw frame (for plain video window)
             # self.raw_frame_signal.emit(cv2.resize(self.frame, (1280, 720)))
@@ -194,12 +215,12 @@ class VideoWorker(QThread):
             # else:
             #     self.frame_signal.emit(cv2.resize(self.frame, (1280, 720)))
 
+            
             if self.ai_enabled:
                 try:
                     frame = self.detector.infer(frame)
                 except Exception as e:
                     print("[YOLO ERROR]", e)
-
             self.frame_signal.emit(frame)
 
             time.sleep(1 / 60)
