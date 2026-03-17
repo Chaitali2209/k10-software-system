@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
 
-        self.status = StatusBar()
+        # self.status = StatusBar()
         self.video = VideoWidget()
         self.telemetry = TelemetryPanel()
         self.controls = ControlPanel()
@@ -40,16 +40,22 @@ class MainWindow(QMainWindow):
         left.addWidget(self.telemetry, 3)
 
         right = QVBoxLayout()
-        right.addWidget(self.map_view, 7)
-        right.addWidget(self.controls, 1)
+        right.addWidget(self.map_view, 1)   # full height now
 
         body = QHBoxLayout()
         body.addLayout(left, 3)
         body.addLayout(right, 2)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.status, 1)
+
+        # 🔼 Controls moved to TOP
+        layout.addWidget(self.controls, 1)
+
+        # Main content
         layout.addLayout(body, 9)
+
+        # 🔽 Status moved to BOTTOM (optional)
+        # layout.addWidget(self.status, 1)
 
         central.setLayout(layout)
 
@@ -76,12 +82,13 @@ class MainWindow(QMainWindow):
         self.controls.upload_mission_clicked.connect(self.map_view.upload_mission)
         self.controls.clear_mission_clicked.connect(self.map_view.clear_mission)
 
+        self.controls.clear_mission_clicked.connect(self.map_view.clear_mission)
+        self.controls.clear_path_clicked.connect(self.map_view.clear_path)
+
     def closeEvent(self, event):
         self.worker.stop_stream()
         return super().closeEvent(event)
 
-        self.controls.clear_mission_clicked.connect(self.map_view.clear_mission)
-        self.controls.clear_path_clicked.connect(self.map_view.clear_path)
 
     def open_video_file(self):
         file_path, _ = QFileDialog.getOpenFileName( 
