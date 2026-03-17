@@ -58,6 +58,7 @@ zoom:15
 let pathPoints=[]
 let missionPoints=[]
 let planningMode=false
+let missionLocked=false 
 let draggingGraphic=null
 
 // --------------------
@@ -111,6 +112,7 @@ width:2
 window.enableMissionPlanning=function(){
 
 planningMode=true
+missionLocked = false 
 missionPoints=[]
 
 waypointLayer.removeAll()
@@ -150,7 +152,7 @@ droneLayer.removeAll()
 
 view.on("click",function(event){
 
-if(!planningMode) return
+if(!planningMode || missionLocked) return
 
 const lon=event.mapPoint.longitude
 const lat=event.mapPoint.latitude
@@ -192,7 +194,7 @@ view.on("pointer-down", function(event){
 
 view.on("drag", function(event){
 
-  if(!draggingGraphic) return
+  if(!draggingGraphic || !planningMode) return
 
   // stop map navigation
   event.stopPropagation()
@@ -234,7 +236,10 @@ view.on("immediate-click",function(event){
 
 if(event.button!==2) return
 
+if(!planningMode) return
+
 event.stopPropagation()
+
 
 view.hitTest(event).then(function(response){
 
@@ -248,7 +253,23 @@ const index=graphic.attributes.index
 missionPoints.splice(index,1)
 
 drawWaypoints()
-drawPlanningLine()
+if(planningMode){
+  drawPlanningLine()
+}else{
+  missionLayer.removeAll()
+
+  missionLayer.add(new Graphic({
+    geometry:{
+      type:"polyline",
+      paths:[missionPoints.map(p=>[p.longitude,p.latitude])]
+    },
+    symbol:{
+      type:"simple-line",
+      color:"red",
+      width:3
+    }
+  }))
+}
 
 }
 
@@ -325,7 +346,8 @@ width:3
 
 window.uploadMission=function(){
 
-planningMode=false
+planningMode = false
+missionLocked = true   
 
 planningLayer.removeAll()
 missionLayer.removeAll()

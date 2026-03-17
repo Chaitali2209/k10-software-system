@@ -32,8 +32,8 @@ class VideoWorker(QThread):
         # YOLO loads once
         self.detector = YOLOOBBDetector( # Path update for my system only, change as needed
              # "D:\\k10app_copy\\k10-software-system\\ml\\yolo-obb.pt"
-            # "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
-            "C:\\Users\\DEVELOPER\\Documents\\k10-software-system\\yolov8n-obb.pt"
+            "D:\\k10app_copy\\k10-software-system\\ml\\best.pt"
+            # "C:\\Users\\DEVELOPER\\Documents\\k10-software-system\\yolov8n-obb.pt"
             # "D:\\k10app_copy\\k10-software-system\\ml\\best-inf3.pt"
         )
 
