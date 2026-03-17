@@ -71,6 +71,8 @@ class MainWindow(QMainWindow):
 
         self.video.ai_toggled.connect(self.worker.enable_ai)
 
+        self.visioncontrol.control_frame.connect(self.video.update_frame)
+
         # MISSION PLANNING
         self.controls.plan_mission_clicked.connect(self.map_view.enable_mission_planning)
         self.controls.upload_mission_clicked.connect(self.map_view.upload_mission)

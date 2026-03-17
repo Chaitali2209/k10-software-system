@@ -237,6 +237,7 @@ HOVER_THROTTLE_PC = 0.25
 LOOP_RATE =  0.01 # 100Hz?
 
 class VisionControl(QThread):
+    control_frame = Signal(object)
     def __init__(self):
         super().__init__()
         self.running = False
@@ -294,9 +295,9 @@ class VisionControl(QThread):
         if event == cv2.EVENT_LBUTTONDOWN:
             # Store the clicked point as a NumPy array of float32,
             # formatted correctly for calcOpticalFlowPyrLK
-            p0 = np.array([[[x, y]]], dtype=np.float32)
-            point_selected = True
-            selected_point = [x, y]
+            self.p0 = np.array([[[x, y]]], dtype=np.float32)
+            self.point_selected = True
+            self.selected_point = [x, y]
             print(f"Tracking point selected at: ({x}, {y})")
 
     def calcOptFlow(self,frame):
@@ -306,18 +307,18 @@ class VisionControl(QThread):
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         if self.old_gray is not None and self.point_selected:
-            p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **self.lk_params)
+            self.p1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.p0, None, **self.lk_params)
 
-            if p1 is not None and st.any():
-                good_new = p1[st == 1]
-                good_old = p0[st == 1]
+            if self.p1 is not None and st.any():
+                good_new = self.p1[st == 1]
+                good_old = self.p0[st == 1]
 
                 a, b = good_new.ravel()
                 c, d = good_old.ravel()
                 target_point = [int(a), int(b)]
 
                 # Update the previous points
-                p0 = good_new.reshape(-1, 1, 2)
+                self.p0 = good_new.reshape(-1, 1, 2)
 
         # Update the previous frame
         self.old_gray = frame_gray.copy()
@@ -454,7 +455,7 @@ class VisionControl(QThread):
             thickness = 2
             fontScale = cv2.getFontScaleFromHeight(fontFace, TextHeight, thickness)
             TextBox_x = int(FRAME_HEIGHT/20)
-            TextBox_y = int(FRAME_HEIGHT/20)
+            TextBox_y = int(FRAME_HEIGHT/5)
             if controller_on:
                 cv2.putText(self.frame, "AUTO", (TextBox_x, TextBox_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale, (0, 255, 0), thickness)
             else:
@@ -490,6 +491,7 @@ class VisionControl(QThread):
 
             elapsed = time.perf_counter() - start_time
             cv2.putText(self.frame, f"Loop Time: {elapsed*1000:2.0f}ms", (TextBox_x, int(TextBox_y+2.6*TextHeight)), fontFace, fontScale, (255, 255, 0), thickness)
+            
             # cv2.imshow('Point Tracking', self.frame)
             # print(f"Loop Time: {elapsed*1000:2.0f}ms")
             # k= cv2.waitKey(30) & 0xff # used to be 30
@@ -498,7 +500,7 @@ class VisionControl(QThread):
             # elif k == ord('c'): # Press 'c' to reset and select a new point
             #     self.point_selected = False
             #     self.p0 = None
-
+            self.control_frame.emit(self.frame)
 
 """
 #
